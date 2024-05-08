@@ -66,7 +66,7 @@ def heuristic_sort_moves(board, legal_moves):
 def evaluation(board):
     # Przykładowa ocena pozycji.
     piece_values = {
-        chess.PAWN: [100, 120, 140, 160, 180, 200, 220, 240, 260],  # Wartości pionów w zależności od ich pozycji
+        chess.PAWN: [100, 120, 140, 160, 180, 200, 220, 240, 260],  # pawn values dependent on their position
         chess.KNIGHT: 300,
         chess.BISHOP: 300,
         chess.ROOK: 500,
@@ -76,7 +76,7 @@ def evaluation(board):
 
     if board.is_checkmate():
         if board.turn == chess.WHITE:
-            score = -999999  # Czarny wygrywa, więc przypisz dużą negatywną wartość
+            score = -999999  # Black wins so add huge negative value
             return score
         else:
             score = +999999
@@ -84,10 +84,10 @@ def evaluation(board):
     else:
         score = 0
 
-    # Sprawdź, ile jest figur na planszy
+    # check how many pieces there is on the board
     num_pieces = sum(1 for square in chess.SQUARES if board.piece_at(square) is not None)
 
-    pawn_punishment = (10 - board.fullmove_number) * 200
+    pawn_punishment = (10 - board.fullmove_number) * 200 # idk dont remember
 
     for square in chess.SQUARES:
         piece = board.piece_at(square)
@@ -96,7 +96,7 @@ def evaluation(board):
 
         if piece.color == chess.WHITE:
             if piece.piece_type == chess.PAWN:
-                # Dla pionów oblicz wartość na podstawie ich pozycji
+                # for pawns calculate points based on position (in order to motivate engine to push them)
                 if chess.square_file(square) in {3, 4} or board.fullmove_number > 10:
                     row = chess.square_rank(square)
                     score += piece_values[piece.piece_type][row]
@@ -105,14 +105,14 @@ def evaluation(board):
             else:
                 score += piece_values[piece.piece_type]
 
-            # Jeśli jest mniej niż 4 figury, nagradzaj zbliżanie króla do króla przeciwnika
+            # if there is small amount of pieces approach enemy king to make more trap situations (for endgames)
             if num_pieces < 4:
                 king_distance = chess.square_distance(square, board.king(chess.BLACK))
                 score += 3 * king_distance
 
         else:
             if piece.piece_type == chess.PAWN:
-                # Dla pionów oblicz wartość na podstawie ich pozycji
+                # for pawns calculate points based on position (in order to motivate engine to push them)
                 if chess.square_file(square) in {3, 4} or board.fullmove_number > 10:
                     row = 9 - chess.square_rank(square)
                     score -= piece_values[piece.piece_type][row]
@@ -121,7 +121,7 @@ def evaluation(board):
             else:
                 score -= piece_values[piece.piece_type]
 
-            # Jeśli jest mniej niż 4 figury, nagradzaj zbliżanie króla do króla przeciwnika
+            # if there is small amount of pieces approach enemy king to make more trap situations (for endgames)
             if num_pieces < 4:
                 king_distance = chess.square_distance(square, board.king(chess.WHITE))
                 score -= 3 * king_distance
@@ -135,7 +135,7 @@ def evaluation(board):
                 opp_king_sq in [chess.H1, chess.H2, chess.H3, chess.H4, chess.H5, chess.H6, chess.H7, chess.H8] and \
                 opp_king_sq in [chess.B1, chess.C1, chess.D1, chess.E1, chess.F1, chess.B8, chess.C8, chess.D8,
                                 chess.E8, chess.F8]:
-            score += 50  # Dodaj punkty za króla przeciwnika blisko wszystkich krawędzi
+            score += 50  # add points for holding enemy king near board borders (for endgames)
     else:
         score -= move_count
         opp_king_sq = board.king(chess.WHITE)
@@ -143,7 +143,7 @@ def evaluation(board):
                 opp_king_sq in [chess.H1, chess.H2, chess.H3, chess.H4, chess.H5, chess.H6, chess.H7, chess.H8] and \
                 opp_king_sq in [chess.B1, chess.C1, chess.D1, chess.E1, chess.F1, chess.B8, chess.C8, chess.D8,
                                 chess.E8, chess.F8]:
-            score -= 50  # Dodaj punkty za króla przeciwnika blisko wszystkich krawędzi
+            score -= 50  # add points for holding enemy king near board borders (for endgames)
 
     castle_bonus = ((12 - board.fullmove_number) * 10) + 200
 
@@ -158,7 +158,7 @@ def evaluation(board):
     if board.is_stalemate():
         score = 0
 
-    # Nagradzaj, gdy król przeciwnika jest blisko wszystkich czterech krawędzi
+    # calculating stalemate (idk why it still stalemates sometimes even tho its winning)
 
     if check_if_in_fen_list_pawns(positions, board.fen()) in positions:
         score = 0
